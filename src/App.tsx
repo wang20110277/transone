@@ -1,0 +1,562 @@
+import { useState } from "react";
+import { 
+  LayoutDashboard, 
+  Settings, 
+  Code2, 
+  FileText, 
+  TestTube2, 
+  Rocket, 
+  Layers,
+  ChevronRight,
+  Plus,
+  Search,
+  MessageSquare,
+  Eye,
+  Terminal,
+  Package,
+  Loader2,
+  CheckCircle2
+} from "lucide-react";
+import { 
+  Sidebar, 
+  SidebarContent, 
+  SidebarGroup, 
+  SidebarGroupContent, 
+  SidebarGroupLabel, 
+  SidebarMenu, 
+  SidebarMenuButton, 
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+  SidebarHeader,
+  SidebarFooter
+} from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { Card } from "@/components/ui/card";
+
+// Mock Data & Components (will be moved to separate files later)
+import { Project, System, Codebase, Requirement, Artifact, Deployment } from "./types";
+
+import { RequirementEditor } from "./components/RequirementEditor";
+
+export default function App() {
+  const [activeTab, setActiveTab] = useState<string>("dashboard");
+  const [selectedProject, setSelectedProject] = useState<string | null>(null);
+
+  const menuItems = [
+    { id: "dashboard", label: "仪表盘", icon: LayoutDashboard },
+    { id: "projects", label: "项目管理", icon: Layers },
+    { id: "requirements", label: "需求管理", icon: FileText },
+    { id: "development", label: "研发管理", icon: Code2 },
+    { id: "testing", label: "测试管理", icon: TestTube2 },
+    { id: "artifacts", label: "制品库", icon: Package },
+    { id: "deployment", label: "部署管理", icon: Rocket },
+  ];
+
+  return (
+    <TooltipProvider>
+      <SidebarProvider>
+        <div className="flex h-screen w-full overflow-hidden bg-background text-foreground">
+          <Sidebar collapsible="icon">
+            <SidebarHeader className="p-4 flex flex-row items-center gap-2">
+              <div className="bg-primary text-primary-foreground p-1.5 rounded-lg">
+                <Rocket className="w-5 h-5" />
+              </div>
+              <span className="font-bold text-xl tracking-tight group-data-[collapsible=icon]:hidden">Transone</span>
+            </SidebarHeader>
+            <SidebarContent>
+              <SidebarGroup>
+                <SidebarGroupLabel>主菜单</SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {menuItems.map((item) => (
+                      <SidebarMenuItem key={item.id}>
+                        <SidebarMenuButton 
+                          isActive={activeTab === item.id}
+                          onClick={() => setActiveTab(item.id)}
+                          tooltip={item.label}
+                        >
+                          <item.icon className="w-4 h-4" />
+                          <span>{item.label}</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            </SidebarContent>
+            <SidebarFooter className="p-4">
+              <div className="flex items-center gap-3 group-data-[collapsible=icon]:justify-center">
+                <Avatar className="w-8 h-8">
+                  <AvatarImage src="https://github.com/shadcn.png" />
+                  <AvatarFallback>JD</AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col group-data-[collapsible=icon]:hidden">
+                  <span className="text-sm font-medium">John Doe</span>
+                  <span className="text-xs text-muted-foreground">管理员</span>
+                </div>
+              </div>
+            </SidebarFooter>
+          </Sidebar>
+
+          <main className="flex-1 flex flex-col overflow-hidden">
+            <header className="h-14 border-b flex items-center justify-between px-6 bg-card/50 backdrop-blur-sm sticky top-0 z-10">
+              <div className="flex items-center gap-4">
+                <SidebarTrigger />
+                <Separator orientation="vertical" className="h-4" />
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <span>Transone</span>
+                  <ChevronRight className="w-4 h-4 mx-1" />
+                  <span className="text-foreground font-medium capitalize">{activeTab}</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="relative w-64">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    placeholder="搜索项目..." 
+                    className="pl-9 h-9 bg-muted/50 border-none focus-visible:ring-1"
+                  />
+                </div>
+                <Button size="sm" className="h-9">
+                  <Plus className="w-4 h-4 mr-2" />
+                  新建项目
+                </Button>
+              </div>
+            </header>
+
+            <ScrollArea className="flex-1">
+              <div className="p-6 max-w-7xl mx-auto w-full">
+                {activeTab === "dashboard" && <DashboardView />}
+                {activeTab === "projects" && <ProjectsView onSelectProject={(id) => { setSelectedProject(id); setActiveTab("projects-detail"); }} />}
+                {activeTab === "projects-detail" && <ProjectDetailView projectId={selectedProject!} />}
+                {activeTab === "requirements" && <RequirementsView />}
+                {activeTab === "development" && <DevelopmentView />}
+                {activeTab === "testing" && <TestingView />}
+                {activeTab === "artifacts" && <ArtifactsView />}
+                {activeTab === "deployment" && <DeploymentView />}
+              </div>
+            </ScrollArea>
+          </main>
+        </div>
+      </SidebarProvider>
+    </TooltipProvider>
+  );
+}
+
+// Placeholder Views (to be implemented)
+function DashboardView() {
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="p-6 rounded-xl border bg-card shadow-sm">
+          <h3 className="text-sm font-medium text-muted-foreground">活跃项目</h3>
+          <p className="text-3xl font-bold mt-2">12</p>
+        </div>
+        <div className="p-6 rounded-xl border bg-card shadow-sm">
+          <h3 className="text-sm font-medium text-muted-foreground">待处理需求</h3>
+          <p className="text-3xl font-bold mt-2">24</p>
+        </div>
+        <div className="p-6 rounded-xl border bg-card shadow-sm">
+          <h3 className="text-sm font-medium text-muted-foreground">今日部署</h3>
+          <p className="text-3xl font-bold mt-2">8</p>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="p-6 rounded-xl border bg-card shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold">最近活动</h2>
+            <Button variant="ghost" size="sm">查看全部</Button>
+          </div>
+          <div className="space-y-4">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="flex items-start gap-3 pb-4 border-b last:border-0">
+                <div className="bg-primary/10 p-2 rounded-full">
+                  <Rocket className="w-4 h-4 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">项目 "Alpha" 已部署至测试环境</p>
+                  <p className="text-xs text-muted-foreground">2小时前</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="p-6 rounded-xl border bg-card shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold">系统健康状态</h2>
+            <Button variant="ghost" size="sm">监控</Button>
+          </div>
+          <div className="space-y-4">
+             {['鉴权服务', '支付网关', '数据处理器'].map(name => (
+               <div key={name} className="flex items-center justify-between">
+                 <span className="text-sm font-medium">{name}</span>
+                 <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">健康</Badge>
+               </div>
+             ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProjectsView({ onSelectProject }: { onSelectProject: (id: string) => void }) {
+  const projects = [
+    { id: '1', name: '电商平台', description: '主购物网站及管理后台', systems: 3, createdAt: '2024-03-10' },
+    { id: '2', name: '内部人力资源系统', description: '员工管理及薪资系统', systems: 2, createdAt: '2024-03-15' },
+    { id: '3', name: '客户门户', description: '面向客户的自服务仪表盘', systems: 1, createdAt: '2024-03-20' },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold tracking-tight">项目管理</h2>
+        <Button>创建项目</Button>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {projects.map(p => (
+          <Card key={p.id} className="p-6 hover:shadow-md transition-shadow cursor-pointer group" onClick={() => onSelectProject(p.id)}>
+            <div className="flex justify-between items-start mb-4">
+              <div className="bg-primary/10 p-2 rounded-lg group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                <Layers className="w-5 h-5" />
+              </div>
+              <Badge variant="secondary">{p.systems} 个系统</Badge>
+            </div>
+            <h3 className="text-lg font-semibold mb-2">{p.name}</h3>
+            <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{p.description}</p>
+            <div className="flex items-center justify-between text-xs text-muted-foreground pt-4 border-t">
+              <span>创建于 {p.createdAt}</span>
+              <ChevronRight className="w-4 h-4" />
+            </div>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ProjectDetailView({ projectId }: { projectId: string }) {
+  const systems = [
+    { 
+      id: 's1', 
+      name: 'Web 前端', 
+      description: '基于 React 的 Web 应用程序', 
+      codebases: [
+        { id: 'c1', name: 'web-client', language: 'TypeScript' },
+        { id: 'c2', name: 'admin-dashboard', language: 'TypeScript' }
+      ] 
+    },
+    { 
+      id: 's2', 
+      name: 'API 网关', 
+      description: 'Node.js/Express 后端服务', 
+      codebases: [
+        { id: 'c3', name: 'api-gateway', language: 'Node.js' }
+      ] 
+    },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+        <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => window.location.reload()}>项目管理</Button>
+        <ChevronRight className="w-4 h-4" />
+        <span className="text-foreground font-medium">项目 #{projectId}</span>
+      </div>
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold tracking-tight">系统与代码库</h2>
+        <Button variant="outline">添加系统</Button>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {systems.map(s => (
+          <Card key={s.id} className="p-6">
+            <div className="flex justify-between items-start mb-4">
+              <div className="bg-blue-500/10 text-blue-500 p-2 rounded-lg">
+                <Settings className="w-5 h-5" />
+              </div>
+              <Badge variant="outline">{s.codebases.length} 个代码库</Badge>
+            </div>
+            <h3 className="text-lg font-semibold mb-2">{s.name}</h3>
+            <p className="text-sm text-muted-foreground mb-6">{s.description}</p>
+            
+            <div className="space-y-3">
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">代码库</h4>
+              {s.codebases.map(c => (
+                <div key={c.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border text-sm">
+                  <div className="flex items-center gap-2">
+                    <Code2 className="w-4 h-4 text-primary" />
+                    <span className="font-medium">{c.name}</span>
+                  </div>
+                  <Badge variant="secondary" className="text-[10px]">{c.language}</Badge>
+                </div>
+              ))}
+            </div>
+            
+            <div className="flex gap-2 mt-6">
+              <Button variant="secondary" size="sm" className="flex-1">管理系统</Button>
+              <Button variant="outline" size="sm" className="flex-1">设置</Button>
+            </div>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function RequirementsView() { 
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">需求管理</h2>
+          <p className="text-sm text-muted-foreground">使用 AI 设计并交付前端需求</p>
+        </div>
+        <Button>新建需求</Button>
+      </div>
+      <RequirementEditor />
+    </div>
+  );
+}
+
+function DevelopmentView() { 
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold tracking-tight">AI 编码与研发</h2>
+        <div className="flex gap-2">
+          <Button variant="outline"><Terminal className="w-4 h-4 mr-2" /> 终端</Button>
+          <Button><Code2 className="w-4 h-4 mr-2" /> AI 编码</Button>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="lg:col-span-2 p-0 overflow-hidden border-2 border-primary/20">
+          <div className="bg-zinc-950 p-3 flex items-center justify-between border-b border-zinc-800">
+            <div className="flex items-center gap-2">
+              <div className="flex gap-1.5">
+                <div className="w-3 h-3 rounded-full bg-red-500/50" />
+                <div className="w-3 h-3 rounded-full bg-yellow-500/50" />
+                <div className="w-3 h-3 rounded-full bg-green-500/50" />
+              </div>
+              <Separator orientation="vertical" className="h-4 bg-zinc-800 mx-2" />
+              <span className="text-xs font-mono text-zinc-400">src/components/Dashboard.tsx</span>
+            </div>
+            <Badge className="bg-primary/20 text-primary border-primary/30 text-[10px]">AI 生成中</Badge>
+          </div>
+          <div className="bg-zinc-950 p-6 font-mono text-sm text-zinc-300 min-h-[400px]">
+            <p className="text-zinc-500 mb-2">// AI 正在根据需求 #REQ-128 实现 Dashboard 组件</p>
+            <p className="text-blue-400">import</p> <p className="text-zinc-300 inline">{`{ useState, useEffect }`}</p> <p className="text-blue-400 inline">from</p> <p className="text-orange-300 inline">"react"</p>;<br/>
+            <p className="text-blue-400">import</p> <p className="text-zinc-300 inline">{`{ Card }`}</p> <p className="text-blue-400 inline">from</p> <p className="text-orange-300 inline">"@/components/ui/card"</p>;<br/>
+            <br/>
+            <p className="text-purple-400">export default function</p> <p className="text-yellow-400 inline">Dashboard</p>() {`{`}<br/>
+            <p className="pl-4 text-blue-400">return</p> (<br/>
+            <p className="pl-8 text-zinc-500">{`<div className="grid gap-4">`}</p><br/>
+            <p className="pl-12 text-zinc-500">{`<Card className="p-6">`}</p><br/>
+            <p className="pl-16 text-zinc-500">{`<h1>AI Generated Dashboard</h1>`}</p><br/>
+            <p className="pl-12 text-zinc-500">{`</Card>`}</p><br/>
+            <p className="pl-8 text-zinc-500">{`</div>`}</p><br/>
+            <p className="pl-4">);</p><br/>
+            {`}`}
+            <div className="mt-8 flex items-center gap-2 text-xs text-zinc-500 animate-pulse">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              <span>正在分析依赖...</span>
+            </div>
+          </div>
+        </Card>
+        
+        <div className="space-y-6">
+          <Card className="p-6">
+            <h3 className="font-semibold mb-4">CI/CD 流水线</h3>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-green-500" />
+                  <span className="text-sm">构建</span>
+                </div>
+                <span className="text-xs text-muted-foreground">成功</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                  <span className="text-sm">测试部署</span>
+                </div>
+                <span className="text-xs text-muted-foreground">运行中...</span>
+              </div>
+              <Separator />
+              <Button className="w-full" variant="outline" size="sm">查看日志</Button>
+            </div>
+          </Card>
+          
+          <Card className="p-6">
+            <h3 className="font-semibold mb-4">制品</h3>
+            <div className="space-y-3">
+              <div className="p-3 rounded-lg bg-muted/50 border text-xs flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Package className="w-3.5 h-3.5" />
+                  <span>v1.2.4-测试版</span>
+                </div>
+                <Badge variant="secondary">代码</Badge>
+              </div>
+              <div className="p-3 rounded-lg bg-muted/50 border text-xs flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Package className="w-3.5 h-3.5" />
+                  <span>v1.2.3-正式版</span>
+                </div>
+                <Badge variant="secondary">代码</Badge>
+              </div>
+            </div>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TestingView() { 
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold tracking-tight">测试管理</h2>
+        <Button>运行所有测试</Button>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card className="p-6">
+          <h3 className="font-semibold mb-4">测试环境</h3>
+          <div className="space-y-4">
+            <div className="p-4 rounded-xl border bg-muted/30">
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-medium">Staging-01</span>
+                <Badge className="bg-green-500">活跃</Badge>
+              </div>
+              <p className="text-xs text-muted-foreground mb-4">URL: https://test-env-01.transone.ai</p>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" className="flex-1 h-8">打开站点</Button>
+                <Button size="sm" variant="outline" className="flex-1 h-8">日志</Button>
+              </div>
+            </div>
+          </div>
+        </Card>
+        
+        <Card className="p-6">
+          <h3 className="font-semibold mb-4">测试结果</h3>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-3 border rounded-lg">
+              <div className="flex items-center gap-3">
+                <CheckCircle2 className="w-5 h-5 text-green-500" />
+                <span className="text-sm font-medium">单元测试</span>
+              </div>
+              <span className="text-xs font-mono">142/142 通过</span>
+            </div>
+            <div className="flex items-center justify-between p-3 border rounded-lg">
+              <div className="flex items-center gap-3">
+                <CheckCircle2 className="w-5 h-5 text-green-500" />
+                <span className="text-sm font-medium">集成测试</span>
+              </div>
+              <span className="text-xs font-mono">28/28 通过</span>
+            </div>
+            <div className="flex items-center justify-between p-3 border rounded-lg">
+              <div className="flex items-center gap-3">
+                <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
+                <span className="text-sm font-medium">E2E 测试</span>
+              </div>
+              <span className="text-xs font-mono">运行中...</span>
+            </div>
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function ArtifactsView() { 
+  const artifacts = [
+    { id: 'a1', name: '用户鉴权流程', type: '需求', version: 'v1.0.2', date: '2024-03-22' },
+    { id: 'a2', name: '支付集成', type: '需求', version: 'v0.9.5', date: '2024-03-21' },
+    { id: 'a3', name: '仪表盘组件', type: '代码', version: 'v1.2.4', date: '2024-03-20' },
+    { id: 'a4', name: 'API 网关服务', type: '代码', version: 'v1.1.0', date: '2024-03-18' },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold tracking-tight">制品仓库</h2>
+        <Button variant="outline">全部导出</Button>
+      </div>
+      
+      <div className="border rounded-xl overflow-hidden">
+        <table className="w-full text-sm">
+          <thead className="bg-muted/50 border-b">
+            <tr>
+              <th className="text-left p-4 font-medium">名称</th>
+              <th className="text-left p-4 font-medium">类型</th>
+              <th className="text-left p-4 font-medium">版本</th>
+              <th className="text-left p-4 font-medium">创建时间</th>
+              <th className="text-right p-4 font-medium">操作</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {artifacts.map(a => (
+              <tr key={a.id} className="hover:bg-muted/30 transition-colors">
+                <td className="p-4 font-medium">{a.name}</td>
+                <td className="p-4">
+                  <Badge variant={a.type === '代码' ? 'default' : 'secondary'}>{a.type}</Badge>
+                </td>
+                <td className="p-4 font-mono text-xs">{a.version}</td>
+                <td className="p-4 text-muted-foreground">{a.date}</td>
+                <td className="p-4 text-right">
+                  <Button variant="ghost" size="sm">下载</Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function DeploymentView() { 
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold tracking-tight">生产部署</h2>
+        <Button className="bg-primary hover:bg-primary/90">
+          <Rocket className="w-4 h-4 mr-2" /> 部署到生产环境
+        </Button>
+      </div>
+      
+      <Card className="p-6">
+        <h3 className="font-semibold mb-4">部署历史</h3>
+        <div className="space-y-4">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="flex items-center justify-between p-4 border rounded-xl hover:bg-muted/10 transition-colors">
+              <div className="flex items-center gap-4">
+                <div className="bg-primary/10 p-2 rounded-full">
+                  <Rocket className="w-4 h-4 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">生产版本 v1.2.0</p>
+                  <p className="text-xs text-muted-foreground">由 John Doe 部署 • 2天前</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <Badge className="bg-green-500">成功</Badge>
+                <Button variant="ghost" size="sm">详情</Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
