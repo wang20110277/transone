@@ -16,7 +16,10 @@ import {
   Package,
   Loader2,
   CheckCircle2,
-  Globe
+  Globe,
+  Building2,
+  LogOut,
+  ArrowLeftRight
 } from "lucide-react";
 import { 
   Sidebar, 
@@ -41,25 +44,84 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Card } from "@/components/ui/card";
 
-// Mock Data & Components (will be moved to separate files later)
-import { Project, System, Codebase, Requirement, Artifact, Deployment } from "./types";
-
+// Mock Data & Components
+import { Project, System, Codebase, Requirement, Artifact, Deployment, Tenant, User } from "./types";
 import { RequirementEditor } from "./components/RequirementEditor";
+import { Login } from "./components/Login";
+import { TeamSelect } from "./components/TeamSelect";
+
+const MOCK_TENANTS: Tenant[] = [
+  { 
+    id: 't1', 
+    name: '创新数智研发组', 
+    permissions: ['dashboard', 'projects', 'requirements', 'artifacts'] 
+  },
+  { 
+    id: 't2', 
+    name: '全球交付中心', 
+    permissions: ['dashboard', 'projects', 'development', 'testing', 'deployment', 'environments'] 
+  },
+];
+
+const MOCK_USER: User = {
+  id: 'u1',
+  name: 'John Doe',
+  email: 'john@example.com',
+  avatar: 'https://github.com/shadcn.png'
+};
+
+const ALL_MENU_ITEMS = [
+  { id: "dashboard", label: "仪表盘", icon: LayoutDashboard },
+  { id: "projects", label: "项目管理", icon: Layers },
+  { id: "requirements", label: "需求管理", icon: FileText },
+  { id: "development", label: "研发管理", icon: Code2 },
+  { id: "testing", label: "测试管理", icon: TestTube2 },
+  { id: "artifacts", label: "制品管理", icon: Package },
+  { id: "deployment", label: "部署管理", icon: Rocket },
+  { id: "environments", label: "环境管理", icon: Globe },
+];
 
 export default function App() {
+  const [user, setUser] = useState<User | null>(null);
+  const [currentTenant, setCurrentTenant] = useState<Tenant | null>(null);
   const [activeTab, setActiveTab] = useState<string>("dashboard");
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
 
-  const menuItems = [
-    { id: "dashboard", label: "仪表盘", icon: LayoutDashboard },
-    { id: "projects", label: "项目管理", icon: Layers },
-    { id: "requirements", label: "需求管理", icon: FileText },
-    { id: "development", label: "研发管理", icon: Code2 },
-    { id: "testing", label: "测试管理", icon: TestTube2 },
-    { id: "artifacts", label: "制品管理", icon: Package },
-    { id: "deployment", label: "部署管理", icon: Rocket },
-    { id: "environments", label: "环境管理", icon: Globe },
-  ];
+  const handleLogin = (email: string) => {
+    setUser({ ...MOCK_USER, email });
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    setCurrentTenant(null);
+    setActiveTab("dashboard");
+  };
+
+  const handleSelectTenant = (tenant: Tenant) => {
+    setCurrentTenant(tenant);
+    // Ensure active tab is within permissions
+    if (!tenant.permissions.includes(activeTab)) {
+      setActiveTab(tenant.permissions[0] || "dashboard");
+    }
+  };
+
+  if (!user) {
+    return <Login onLogin={handleLogin} />;
+  }
+
+  if (!currentTenant) {
+    return (
+      <TeamSelect 
+        tenants={MOCK_TENANTS} 
+        onSelect={handleSelectTenant} 
+        onLogout={handleLogout} 
+      />
+    );
+  }
+
+  const filteredMenuItems = ALL_MENU_ITEMS.filter(item => 
+    currentTenant.permissions.includes(item.id)
+  );
 
   return (
     <TooltipProvider>
@@ -70,14 +132,17 @@ export default function App() {
               <div className="bg-primary text-primary-foreground p-1.5 rounded-lg">
                 <Rocket className="w-5 h-5" />
               </div>
-              <span className="font-bold text-xl tracking-tight group-data-[collapsible=icon]:hidden">TransOne</span>
+              <div className="flex flex-col group-data-[collapsible=icon]:hidden overflow-hidden">
+                <span className="font-bold text-lg tracking-tight truncate">TransOne</span>
+                <span className="text-[10px] text-muted-foreground truncate">{currentTenant.name}</span>
+              </div>
             </SidebarHeader>
             <SidebarContent>
               <SidebarGroup>
                 <SidebarGroupLabel>主菜单</SidebarGroupLabel>
                 <SidebarGroupContent>
                   <SidebarMenu>
-                    {menuItems.map((item) => (
+                    {filteredMenuItems.map((item) => (
                       <SidebarMenuItem key={item.id}>
                         <SidebarMenuButton 
                           isActive={activeTab === item.id}
@@ -93,15 +158,37 @@ export default function App() {
                 </SidebarGroupContent>
               </SidebarGroup>
             </SidebarContent>
-            <SidebarFooter className="p-4">
-              <div className="flex items-center gap-3 group-data-[collapsible=icon]:justify-center">
-                <Avatar className="w-8 h-8">
-                  <AvatarImage src="https://github.com/shadcn.png" />
-                  <AvatarFallback>JD</AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-                  <span className="text-sm font-medium">John Doe</span>
-                  <span className="text-xs text-muted-foreground">管理员</span>
+            <SidebarFooter className="p-4 border-t border-zinc-100 dark:border-zinc-800">
+              <div className="flex flex-col gap-2">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="w-full justify-start gap-2 h-9 px-2 group-data-[collapsible=icon]:justify-center"
+                  onClick={() => setCurrentTenant(null)}
+                >
+                  <ArrowLeftRight className="w-4 h-4 text-muted-foreground" />
+                  <span className="group-data-[collapsible=icon]:hidden">切换工作空间</span>
+                </Button>
+                
+                <Separator />
+
+                <div className="flex items-center gap-3 py-2 px-1 group-data-[collapsible=icon]:justify-center relative group/user">
+                  <Avatar className="w-8 h-8">
+                    <AvatarImage src={user.avatar} />
+                    <AvatarFallback>{user.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col group-data-[collapsible=icon]:hidden min-w-0">
+                    <span className="text-sm font-medium truncate">{user.name}</span>
+                    <span className="text-[10px] text-muted-foreground truncate">管理员</span>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="ml-auto w-7 h-7 group-data-[collapsible=icon]:hidden opacity-0 group-hover/user:opacity-100 transition-opacity"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="w-4 h-4 text-muted-foreground" />
+                  </Button>
                 </div>
               </div>
             </SidebarFooter>
@@ -113,13 +200,14 @@ export default function App() {
                 <SidebarTrigger />
                 <Separator orientation="vertical" className="h-4" />
                 <div className="flex items-center text-sm text-muted-foreground">
-                  <span>TransOne</span>
-                  <ChevronRight className="w-4 h-4 mx-1" />
-                  <span className="text-foreground font-medium capitalize">{activeTab}</span>
+                  <Building2 className="w-3.5 h-3.5 mr-1.5" />
+                  <span className="max-w-[120px] truncate">{currentTenant.name}</span>
+                  <ChevronRight className="w-4 h-4 mx-1 flex-shrink-0" />
+                  <span className="text-foreground font-medium capitalize truncate">{activeTab}</span>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <div className="relative w-64">
+                <div className="relative w-64 hidden sm:block">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input 
                     placeholder="搜索项目..." 
@@ -136,7 +224,7 @@ export default function App() {
             <ScrollArea className="flex-1">
               <div className="p-6 max-w-7xl mx-auto w-full">
                 {activeTab === "dashboard" && <DashboardView />}
-                {activeTab === "projects" && <ProjectsView onSelectProject={(id) => { setSelectedProject(id); setActiveTab("projects-detail"); }} />}
+                {activeTab === "projects" && <ProjectsView tenantId={currentTenant.id} onSelectProject={(id) => { setSelectedProject(id); setActiveTab("projects-detail"); }} />}
                 {activeTab === "projects-detail" && <ProjectDetailView projectId={selectedProject!} />}
                 {activeTab === "requirements" && <RequirementsView />}
                 {activeTab === "development" && <DevelopmentView />}
@@ -153,7 +241,7 @@ export default function App() {
   );
 }
 
-// Placeholder Views (to be implemented)
+// Update Sub-components to filter by tenant
 function DashboardView() {
   return (
     <div className="space-y-6">
@@ -211,32 +299,37 @@ function DashboardView() {
   );
 }
 
-function ProjectsView({ onSelectProject }: { onSelectProject: (id: string) => void }) {
-  const projects = [
-    { id: '1', name: '电商平台', description: '主购物网站及管理后台', systems: 3, createdAt: '2024-03-10' },
-    { id: '2', name: '内部人力资源系统', description: '员工管理及薪资系统', systems: 2, createdAt: '2024-03-15' },
-    { id: '3', name: '客户门户', description: '面向客户的自服务仪表盘', systems: 1, createdAt: '2024-03-20' },
+function ProjectsView({ tenantId, onSelectProject }: { tenantId: string, onSelectProject: (id: string) => void }) {
+  // Shared projects belong to multiple tenants
+  const allProjects = [
+    { id: '1', name: '全渠道零售电商平台', description: '支持 B2B/B2C 的全渠道零售解决方案，包含主站与管理中台', systems: 3, createdAt: '2024-03-10', tenantIds: ['t1', 't2'] },
+    { id: '2', name: '内部人力资源系统', description: '员工全生命周期管理及薪资自动化结算系统', systems: 2, createdAt: '2024-03-15', tenantIds: ['t1'] },
+    { id: '3', name: '智能客服门户', description: '集成 AI 大模型的客户自助服务与工单系统', systems: 1, createdAt: '2024-03-20', tenantIds: ['t2'] },
   ];
+
+  const projects = allProjects.filter(p => p.tenantIds.includes(tenantId));
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold tracking-tight">项目管理</h2>
+        <h2 className="text-2xl font-bold tracking-tight">项目列表</h2>
         <Button>创建项目</Button>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {projects.map(p => (
-          <Card key={p.id} className="p-6 hover:shadow-md transition-shadow cursor-pointer group" onClick={() => onSelectProject(p.id)}>
+          <Card key={p.id} className="p-6 hover:shadow-md transition-shadow cursor-pointer group flex flex-col h-full" onClick={() => onSelectProject(p.id)}>
             <div className="flex justify-between items-start mb-4">
               <div className="bg-primary/10 p-2 rounded-lg group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
                 <Layers className="w-5 h-5" />
               </div>
-              <Badge variant="secondary">{p.systems} 个系统</Badge>
+              <Badge variant="secondary" className="font-normal">{p.systems} 个系统</Badge>
             </div>
-            <h3 className="text-lg font-semibold mb-2">{p.name}</h3>
-            <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{p.description}</p>
-            <div className="flex items-center justify-between text-xs text-muted-foreground pt-4 border-t">
-              <span>创建于 {p.createdAt}</span>
+            <div className="flex-1">
+              <h3 className="text-lg font-bold mb-2 group-hover:text-primary transition-colors">{p.name}</h3>
+              <p className="text-sm text-muted-foreground mb-4 line-clamp-2 leading-relaxed">{p.description}</p>
+            </div>
+            <div className="flex items-center justify-between text-[10px] text-muted-foreground pt-4 border-t uppercase tracking-wider">
+              <span>创建日期: {p.createdAt}</span>
               <ChevronRight className="w-4 h-4" />
             </div>
           </Card>

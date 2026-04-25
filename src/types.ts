@@ -1,8 +1,23 @@
+export type User = {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+};
+
+export type Tenant = {
+  id: string;
+  name: string;
+  logo?: string;
+  permissions: string[]; // List of menu item IDs allowed for this tenant
+};
+
 export type Project = {
   id: string;
   name: string;
   description: string;
   createdAt: string;
+  tenantIds: string[]; // Projects can be associated with multiple tenants
 };
 
 export type System = {
@@ -26,7 +41,7 @@ export type Requirement = {
   title: string;
   status: 'draft' | 'designing' | 'completed';
   chatHistory: ChatMessage[];
-  prototype?: string; // HTML/React code
+  prototype?: string;
   artifact?: string;
 };
 
