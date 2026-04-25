@@ -58,7 +58,7 @@ const MOCK_TENANTS: Tenant[] = [
     id: 't1', 
     name: '创新数智研发组', 
     roles: [
-      { id: 'r1', name: '产品负责人', permissions: ['dashboard', 'projects', 'requirements', 'artifacts'], agentId: 'a1' },
+      { id: 'r1', name: '产品负责人', permissions: ['dashboard', 'projects', 'requirements', 'artifacts', 'development', 'testing'], agentId: 'a1' },
       { id: 'r2', name: '全栈工程师', permissions: ['dashboard', 'projects', 'development', 'testing', 'deployment'], agentId: 'a2' }
     ],
     members: [
