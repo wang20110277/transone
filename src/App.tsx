@@ -15,7 +15,8 @@ import {
   Terminal,
   Package,
   Loader2,
-  CheckCircle2
+  CheckCircle2,
+  Globe
 } from "lucide-react";
 import { 
   Sidebar, 
@@ -55,8 +56,9 @@ export default function App() {
     { id: "requirements", label: "需求管理", icon: FileText },
     { id: "development", label: "研发管理", icon: Code2 },
     { id: "testing", label: "测试管理", icon: TestTube2 },
-    { id: "artifacts", label: "制品库", icon: Package },
+    { id: "artifacts", label: "制品管理", icon: Package },
     { id: "deployment", label: "部署管理", icon: Rocket },
+    { id: "environments", label: "环境管理", icon: Globe },
   ];
 
   return (
@@ -68,7 +70,7 @@ export default function App() {
               <div className="bg-primary text-primary-foreground p-1.5 rounded-lg">
                 <Rocket className="w-5 h-5" />
               </div>
-              <span className="font-bold text-xl tracking-tight group-data-[collapsible=icon]:hidden">Transone</span>
+              <span className="font-bold text-xl tracking-tight group-data-[collapsible=icon]:hidden">TransOne</span>
             </SidebarHeader>
             <SidebarContent>
               <SidebarGroup>
@@ -111,7 +113,7 @@ export default function App() {
                 <SidebarTrigger />
                 <Separator orientation="vertical" className="h-4" />
                 <div className="flex items-center text-sm text-muted-foreground">
-                  <span>Transone</span>
+                  <span>TransOne</span>
                   <ChevronRight className="w-4 h-4 mx-1" />
                   <span className="text-foreground font-medium capitalize">{activeTab}</span>
                 </div>
@@ -140,6 +142,7 @@ export default function App() {
                 {activeTab === "development" && <DevelopmentView />}
                 {activeTab === "testing" && <TestingView />}
                 {activeTab === "artifacts" && <ArtifactsView />}
+                {activeTab === "environments" && <EnvironmentsView />}
                 {activeTab === "deployment" && <DeploymentView />}
               </div>
             </ScrollArea>
@@ -488,7 +491,7 @@ function ArtifactsView() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold tracking-tight">制品仓库</h2>
+        <h2 className="text-2xl font-bold tracking-tight">制品管理</h2>
         <Button variant="outline">全部导出</Button>
       </div>
       
@@ -519,6 +522,53 @@ function ArtifactsView() {
             ))}
           </tbody>
         </table>
+      </div>
+    </div>
+  );
+}
+
+function EnvironmentsView() {
+  const environments = [
+    { id: 'env-1', name: '开发环境 (Dev)', status: 'Online', region: '亚洲 (北京)', nodes: 3 },
+    { id: 'env-2', name: '测试环境 (QA)', status: 'Online', region: '亚洲 (上海)', nodes: 2 },
+    { id: 'env-3', name: '预发布环境 (Staging)', status: 'Online', region: '亚洲 (东京)', nodes: 5 },
+    { id: 'env-4', name: '生产环境 (Prod)', status: 'Maintenance', region: '全球 (多可用区)', nodes: 12 },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold tracking-tight">环境管理</h2>
+        <Button>新建环境</Button>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {environments.map(env => (
+          <Card key={env.id} className="p-6">
+            <div className="flex justify-between items-start mb-4">
+              <div className="bg-primary/10 p-2 rounded-lg">
+                <Globe className="w-5 h-5 text-primary" />
+              </div>
+              <Badge variant={env.status === 'Online' ? 'default' : 'secondary'} className={env.status === 'Online' ? 'bg-green-500 hover:bg-green-600' : ''}>
+                {env.status === 'Online' ? '在线' : '维护中'}
+              </Badge>
+            </div>
+            <h3 className="text-lg font-semibold mb-2">{env.name}</h3>
+            <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground mb-4">
+              <div>
+                <p className="text-xs uppercase font-medium mb-1">区域</p>
+                <p className="text-foreground">{env.region}</p>
+              </div>
+              <div>
+                <p className="text-xs uppercase font-medium mb-1">节点数</p>
+                <p className="text-foreground">{env.nodes} 节点</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" className="flex-1">资源详情</Button>
+              <Button variant="outline" size="sm" className="flex-1 text-red-500 hover:text-red-600">停止服务</Button>
+            </div>
+          </Card>
+        ))}
       </div>
     </div>
   );
