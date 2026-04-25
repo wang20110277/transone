@@ -17,6 +17,7 @@ import {
   Loader2,
   CheckCircle2,
   Globe,
+  Users,
   Building2,
   LogOut,
   ArrowLeftRight
@@ -49,17 +50,39 @@ import { Project, System, Codebase, Requirement, Artifact, Deployment, Tenant, U
 import { RequirementEditor } from "./components/RequirementEditor";
 import { Login } from "./components/Login";
 import { TeamSelect } from "./components/TeamSelect";
+import { TeamManagement } from "./components/TeamManagement";
+import { GlobalAIChat } from "./components/GlobalAIChat";
 
 const MOCK_TENANTS: Tenant[] = [
   { 
     id: 't1', 
     name: '创新数智研发组', 
-    permissions: ['dashboard', 'projects', 'requirements', 'artifacts'] 
+    roles: [
+      { id: 'r1', name: '产品负责人', permissions: ['dashboard', 'projects', 'requirements', 'artifacts'], agentId: 'a1' },
+      { id: 'r2', name: '全栈工程师', permissions: ['dashboard', 'projects', 'development', 'testing', 'deployment'], agentId: 'a2' }
+    ],
+    members: [
+      { userId: 'u1', roleId: 'r1', status: 'active', isTeamAdmin: true },
+      { userId: 'u2', roleId: 'r2', status: 'active' },
+      { userId: 'u3', roleId: 'r2', status: 'pending' }
+    ],
+    agents: [
+      { id: 'a1', name: '需求架构师', model: 'claudecode', description: '负责需求分析、原型设计与技术架构规范' },
+      { id: 'a2', name: '编码助手', model: 'codex', description: '负责代码生成、单元测试与性能调优' }
+    ]
   },
   { 
     id: 't2', 
     name: '全球交付中心', 
-    permissions: ['dashboard', 'projects', 'development', 'testing', 'deployment', 'environments'] 
+    roles: [
+      { id: 'r3', name: 'DevOps 工程师', permissions: ['dashboard', 'projects', 'deployment', 'environments'], agentId: 'a3' }
+    ],
+    members: [
+      { userId: 'u1', roleId: 'r3', status: 'active', isTeamAdmin: true }
+    ],
+    agents: [
+      { id: 'a3', name: '部署专家', model: 'claudecode', description: '负责自动化部署流配置与环境稳定性监控' }
+    ]
   },
 ];
 
@@ -79,6 +102,7 @@ const ALL_MENU_ITEMS = [
   { id: "artifacts", label: "制品管理", icon: Package },
   { id: "deployment", label: "部署管理", icon: Rocket },
   { id: "environments", label: "环境管理", icon: Globe },
+  { id: "team", label: "团队管理", icon: Users },
 ];
 
 export default function App() {
@@ -99,9 +123,13 @@ export default function App() {
 
   const handleSelectTenant = (tenant: Tenant) => {
     setCurrentTenant(tenant);
-    // Ensure active tab is within permissions
-    if (!tenant.permissions.includes(activeTab)) {
-      setActiveTab(tenant.permissions[0] || "dashboard");
+    const member = tenant.members.find(m => m.userId === user?.id);
+    const roleId = member?.roleId;
+    const role = tenant.roles.find(r => r.id === roleId);
+    
+    // Default to first permitted tab or dashboard
+    if (role && !role.permissions.includes(activeTab)) {
+      setActiveTab(role.permissions[0] || "dashboard");
     }
   };
 
@@ -119,9 +147,19 @@ export default function App() {
     );
   }
 
-  const filteredMenuItems = ALL_MENU_ITEMS.filter(item => 
-    currentTenant.permissions.includes(item.id)
+  const currentUserMember = currentTenant.members.find(m => m.userId === user.id);
+  const currentUserRole = currentTenant.roles.find(r => r.id === currentUserMember?.roleId);
+  const isTeamAdmin = currentUserMember?.isTeamAdmin;
+
+  let filteredMenuItems = ALL_MENU_ITEMS.filter(item => 
+    currentUserRole?.permissions.includes(item.id)
   );
+
+  // Add team management for admins if not already there
+  if (isTeamAdmin && !filteredMenuItems.some(item => item.id === 'team')) {
+    const teamMenu = ALL_MENU_ITEMS.find(i => i.id === 'team');
+    if (teamMenu) filteredMenuItems.push(teamMenu);
+  }
 
   return (
     <TooltipProvider>
@@ -232,11 +270,13 @@ export default function App() {
                 {activeTab === "artifacts" && <ArtifactsView />}
                 {activeTab === "environments" && <EnvironmentsView />}
                 {activeTab === "deployment" && <DeploymentView />}
+                {activeTab === "team" && <TeamManagement tenant={currentTenant} />}
               </div>
             </ScrollArea>
           </main>
         </div>
       </SidebarProvider>
+      <GlobalAIChat />
     </TooltipProvider>
   );
 }

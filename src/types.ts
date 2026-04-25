@@ -3,13 +3,37 @@ export type User = {
   name: string;
   email: string;
   avatar?: string;
+  isSystemAdmin?: boolean;
+};
+
+export type Role = {
+  id: string;
+  name: string;
+  permissions: string[]; // Menu IDs
+  agentId?: string; // Associated AI agent
+};
+
+export type Member = {
+  userId: string;
+  roleId: string;
+  status: 'pending' | 'active';
+  isTeamAdmin?: boolean;
+};
+
+export type Agent = {
+  id: string;
+  name: string;
+  model: 'claudecode' | 'codex';
+  description: string;
 };
 
 export type Tenant = {
   id: string;
   name: string;
   logo?: string;
-  permissions: string[]; // List of menu item IDs allowed for this tenant
+  roles: Role[];
+  members: Member[];
+  agents: Agent[];
 };
 
 export type Project = {
@@ -17,7 +41,7 @@ export type Project = {
   name: string;
   description: string;
   createdAt: string;
-  tenantIds: string[]; // Projects can be associated with multiple tenants
+  tenantIds: string[];
 };
 
 export type System = {
@@ -35,20 +59,39 @@ export type Codebase = {
   language: string;
 };
 
+export type ChatMessage = {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: string;
+};
+
+export type Comment = {
+  id: string;
+  userId: string;
+  content: string;
+  timestamp: string;
+  attachments: string[]; // List of asset IDs
+};
+
+export type Asset = {
+  id: string;
+  name: string;
+  type: string;
+  path: string;
+  creatorId: string; // User ID or Agent ID
+  timestamp: string;
+};
+
 export type Requirement = {
   id: string;
   projectId: string;
   title: string;
   status: 'draft' | 'designing' | 'completed';
   chatHistory: ChatMessage[];
+  comments: Comment[];
+  assets: Asset[];
   prototype?: string;
   artifact?: string;
-};
-
-export type ChatMessage = {
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: string;
 };
 
 export type Artifact = {
